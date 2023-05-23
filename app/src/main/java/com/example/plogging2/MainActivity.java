@@ -11,14 +11,19 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+import java.io.File;
 
-    TextView textViewStepCounter, textViewIsRun;
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
+    TextView textViewStepCounter, textViewWasteCounter;
+    Button buttonExercise, buttonRecord, buttonWastePlus, buttonWasteMinus;
     SensorManager sensorManager;
-    boolean run = false, needToReset = false;
-    int stepCount = 0;
+    File file;
+    boolean run = false, needToReset = false, isExercising = false;
+    int stepCount = 0, wasteCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,12 +37,33 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             requestPermissions(new String[]{android.Manifest.permission.ACTIVITY_RECOGNITION}, 0);
         }
 
+        if(ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
+
+            requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+        }
+
+        if(ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
+
+            requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+        }
+
         textViewStepCounter = (TextView) findViewById(R.id.textViewStepCounter);
-        textViewIsRun = (TextView) findViewById(R.id.textViewIsRun);
+        textViewWasteCounter = (TextView) findViewById(R.id.textViewWasteCounter);
+
+        buttonExercise = (Button) findViewById(R.id.buttonExercise);
+        buttonRecord = (Button) findViewById(R.id.buttonRecord);
+        buttonWastePlus = (Button) findViewById(R.id.buttonWastePlus);
+        buttonWasteMinus = (Button) findViewById(R.id.buttonWasteMinus);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-        textViewStepCounter.setText("0");
+        textViewStepCounter.setText("Not Exercising.");
+
+        buttonWastePlus.setEnabled(false);
+        buttonWasteMinus.setEnabled(false);
+        buttonRecord.setEnabled(false);
 
         needToReset = true;
     }
@@ -49,7 +75,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             stepCount = (int) event.values[0];
             needToReset = false;
         }
-        if(run)
+
+        if(run && isExercising)
         {
             textViewStepCounter.setText(String.valueOf((int) event.values[0] - stepCount));
         }
@@ -64,7 +91,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onPause() {
         super.onPause();
         run = false;
-        textViewIsRun.setText("Not Run");
     }
 
     @SuppressLint("SetTextI18n")
@@ -72,7 +98,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onResume() {
         super.onResume();
         run = true;
-        textViewIsRun.setText("Running");
         Sensor count = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
 
         if(count != null)
@@ -83,5 +108,48 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         {
             textViewStepCounter.setText("No Sensor.");
         }
+    }
+
+    public void resetCount(View v)
+    {
+        needToReset = true;
+        textViewStepCounter.setText("reset complete.");
+    }
+
+    public void toggleExercise(View v)
+    {
+        if(isExercising)
+        {
+            isExercising = false;
+            buttonExercise.setText("Start Plogging!");
+            buttonWastePlus.setEnabled(false);
+            buttonWasteMinus.setEnabled(false);
+            buttonRecord.setEnabled(true);
+        }
+        else
+        {
+            isExercising = true;
+            needToReset = true;
+            textViewStepCounter.setText("0");
+            wasteCount = 0;
+            textViewWasteCounter.setText(String.valueOf(wasteCount));
+            buttonExercise.setText("End Plogging!");
+            buttonWastePlus.setEnabled(true);
+            buttonWasteMinus.setEnabled(true);
+            buttonRecord.setEnabled(false);
+        }
+    }
+
+    public void wastePlus(View v)
+    {
+        wasteCount++;
+        textViewWasteCounter.setText(String.valueOf(wasteCount));
+    }
+
+    public void wasteMinus(View v)
+    {
+        wasteCount--;
+        if(wasteCount < 0) wasteCount = 0;
+        textViewWasteCounter.setText(String.valueOf(wasteCount));
     }
 }
