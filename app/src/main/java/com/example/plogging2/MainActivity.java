@@ -5,6 +5,8 @@ import androidx.core.content.ContextCompat;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -14,8 +16,16 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
+import java.lang.reflect.Type;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
     TextView textViewStepCounter, textViewWasteCounter;
@@ -24,6 +34,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     File file;
     boolean run = false, needToReset = false, isExercising = false;
     int stepCount = 0, wasteCount = 0;
+
+    ArrayList<String> data_Date = new ArrayList<>();
+    ArrayList<String> data_stepCount = new ArrayList<>();
+    ArrayList<String> data_wasteCount = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,5 +165,40 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         wasteCount--;
         if(wasteCount < 0) wasteCount = 0;
         textViewWasteCounter.setText(String.valueOf(wasteCount));
+    }
+
+    public void dataSave(View v)
+    {
+        long mNow = System.currentTimeMillis();
+        Date mDate = new Date(mNow);
+        SimpleDateFormat mFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        String currDate = mFormat.format(mDate);
+
+        data_Date.add(0,currDate);
+        data_stepCount.add(0,textViewStepCounter.getText().toString());
+        data_wasteCount.add(0,textViewWasteCounter.getText().toString());
+
+        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("PloggingData", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        Gson gson = new Gson();
+
+        String json1 = gson.toJson(data_Date);
+        String json2 = gson.toJson(data_stepCount);
+        String json3 = gson.toJson(data_wasteCount);
+        editor.putString("data_Date", json1);
+        editor.putString("data_stepCount", json2);
+        editor.putString("data_wasteCount", json3);
+        editor.apply();
+
+        buttonRecord.setEnabled(false);
+
+        Toast.makeText(this,"Data Saved!", Toast.LENGTH_SHORT).show();
+    }
+
+    public void openHistory(View v)
+    {
+        Intent intent = new Intent(this, DataHistoryActivity.class);
+        startActivity(intent);
     }
 }
