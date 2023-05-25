@@ -97,6 +97,8 @@ public class DataHistoryActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
+        recyclerView.removeAllViewsInLayout(); //test
+
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(new dataBoxAdapter(getApplicationContext(),list));
     }
